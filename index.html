@@ -110,6 +110,7 @@ body{
 .badge{font-size:10.5px;font-weight:600;padding:3px 8px;border-radius:8px;}
 .badge.brand-hebras{background:var(--orange-light);color:#6b2f8a;}
 .badge.brand-zen{background:var(--green-light);color:#5b3a8f;}
+.badge.brand-custom{background:#fdf0d9;color:#9c6a1f;}
 .badge.teina-si{background:#f3e7fb;color:#7a3b9c;}
 .badge.teina-no{background:#ece6f2;color:#5c5068;}
 .score-pill{
@@ -163,9 +164,57 @@ textarea.review{
 }
 textarea.review::placeholder{color:var(--ink-faint);}
 
+.delete-tea-btn{
+  margin-top:10px;background:none;border:1px solid #e3c5c5;color:#a13b3b;
+  font-size:12px;font-weight:600;padding:7px 12px;border-radius:9px;width:100%;
+}
+
 .empty-msg{
   text-align:center;color:var(--ink-faint);font-size:13.5px;padding:40px 20px;
 }
+
+.add-tea-wrap{padding:4px 16px 8px;}
+.add-tea-btn{
+  width:100%;background:var(--green);color:#fff;border:none;
+  font-size:14px;font-weight:700;padding:12px 0;border-radius:12px;
+  box-shadow:var(--shadow);
+}
+.add-tea-btn:active{opacity:0.9;}
+
+.modal-overlay{
+  position:fixed;inset:0;background:rgba(20,15,30,0.5);
+  z-index:60;display:flex;align-items:flex-end;justify-content:center;
+}
+.modal-overlay.hidden{display:none;}
+.modal-sheet{
+  background:var(--bg);width:100%;max-width:480px;border-radius:20px 20px 0 0;
+  max-height:88vh;overflow-y:auto;padding:18px 18px 24px;
+  box-shadow:0 -4px 20px rgba(0,0,0,0.2);
+}
+.modal-sheet h2{margin:0 0 14px;font-size:17px;color:var(--ink);}
+.field{margin-bottom:13px;}
+.field label{display:block;font-size:12.5px;font-weight:700;color:var(--ink-soft);margin-bottom:5px;}
+.field input[type="text"],.field select,.field textarea{
+  width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--border);
+  font-size:14px;font-family:inherit;color:var(--ink);background:var(--card);
+}
+.field textarea{min-height:70px;resize:vertical;}
+.field-row{display:flex;gap:10px;}
+.field-row .field{flex:1;}
+.radio-row{display:flex;gap:8px;}
+.radio-opt{
+  flex:1;text-align:center;padding:9px 0;border-radius:10px;border:1px solid var(--border);
+  font-size:13px;font-weight:600;color:var(--ink-soft);background:var(--card);
+}
+.radio-opt.selected{background:var(--green);color:#fff;border-color:var(--green);}
+.modal-actions{display:flex;gap:10px;margin-top:16px;}
+.modal-btn{
+  flex:1;padding:12px 0;border-radius:11px;font-size:14px;font-weight:700;border:none;
+}
+.modal-btn.cancel{background:var(--card);color:var(--ink-soft);border:1px solid var(--border);}
+.modal-btn.save{background:var(--green);color:#fff;}
+.field-error{color:#a13b3b;font-size:12px;margin-top:4px;display:none;}
+.field-error.show{display:block;}
 
 .bottom-bar{
   position:fixed;bottom:0;left:0;right:0;z-index:30;
@@ -211,7 +260,7 @@ textarea.review::placeholder{color:var(--ink-faint);}
   <h1>Crónicas de una Jedi del Té</h1>
   <p>Tu diario de tés: probá, puntuá y guardá tus reseñas</p>
   <div class="stats-row">
-    <div class="stat"><span class="num" id="stat-tried">0/30</span><span class="lbl">probados</span></div>
+    <div class="stat"><span class="num" id="stat-tried">0</span><span class="lbl">probados</span></div>
     <div class="stat"><span class="num" id="stat-avg">–</span><span class="lbl">promedio</span></div>
     <div class="stat"><span class="num" id="stat-fav">–</span><span class="lbl">favorito</span></div>
   </div>
@@ -230,6 +279,9 @@ textarea.review::placeholder{color:var(--ink-faint);}
 <div id="view-list">
   <div class="filters" id="filters"></div>
   <div class="search-wrap"><input type="text" id="search" placeholder="Buscar un té..."></div>
+  <div class="add-tea-wrap">
+    <button type="button" id="btn-add-tea" class="add-tea-btn">+ Agregar mi propio té</button>
+  </div>
   <div id="list"></div>
 </div>
 
@@ -239,6 +291,56 @@ textarea.review::placeholder{color:var(--ink-faint);}
 
 <div class="bottom-bar"><p>Tus datos se guardan solo en este celular 🤍 — usá "Exportar" si cambiás de celular</p></div>
 <div class="toast" id="toast"></div>
+
+<div class="modal-overlay hidden" id="modal-overlay">
+  <div class="modal-sheet">
+    <h2>Agregar mi propio té</h2>
+    <div class="field">
+      <label>Nombre del té *</label>
+      <input type="text" id="f-name" placeholder="Ej: Té de jengibre con limón">
+      <div class="field-error" id="f-name-error">Escribí un nombre para el té</div>
+    </div>
+    <div class="field">
+      <label>Marca</label>
+      <input type="text" id="f-brand" placeholder="Ej: Green Hills, La Mariana...">
+    </div>
+    <div class="field">
+      <label>Tipo de base *</label>
+      <div class="radio-row" id="f-type-row">
+        <div class="radio-opt" data-val="Té negro">Negro</div>
+        <div class="radio-opt" data-val="Té verde">Verde</div>
+        <div class="radio-opt" data-val="Té blanco">Blanco</div>
+        <div class="radio-opt" data-val="Infusión">Infusión</div>
+      </div>
+      <div class="field-error" id="f-type-error">Elegí un tipo de base</div>
+    </div>
+    <div class="field">
+      <label>¿Tiene teína?</label>
+      <div class="radio-row" id="f-teina-row">
+        <div class="radio-opt selected" data-val="Sí">Sí</div>
+        <div class="radio-opt" data-val="No">No</div>
+      </div>
+    </div>
+    <div class="field">
+      <label>Descripción</label>
+      <textarea id="f-desc" placeholder="¿De qué está hecho? ¿Qué sabor tiene?"></textarea>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>Temperatura</label>
+        <input type="text" id="f-temp" placeholder="Ej: 90°C">
+      </div>
+      <div class="field">
+        <label>Tiempo de infusión</label>
+        <input type="text" id="f-time" placeholder="Ej: 5 min">
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button type="button" class="modal-btn cancel" id="btn-cancel-tea">Cancelar</button>
+      <button type="button" class="modal-btn save" id="btn-save-tea">Guardar té</button>
+    </div>
+  </div>
+</div>
 
 <script>
 var TEAS = [
@@ -275,7 +377,9 @@ var TEAS = [
 ];
 
 var STORE_KEY = "inti_tea_guide_v1";
+var CUSTOM_KEY = "inti_tea_custom_teas_v1";
 var state = {};
+var customTeas = [];
 
 function loadState(){
   try{
@@ -286,16 +390,56 @@ function loadState(){
 function saveState(){
   try{ localStorage.setItem(STORE_KEY, JSON.stringify(state)); }catch(e){}
 }
+function loadCustomTeas(){
+  try{
+    var raw = localStorage.getItem(CUSTOM_KEY);
+    customTeas = raw ? JSON.parse(raw) : [];
+  }catch(e){ customTeas = []; }
+}
+function saveCustomTeas(){
+  try{ localStorage.setItem(CUSTOM_KEY, JSON.stringify(customTeas)); }catch(e){}
+}
+function allTeas(){
+  return TEAS.concat(customTeas);
+}
 function getEntry(name){
   if(!state[name]) state[name] = {tried:false, score:0, review:""};
   return state[name];
+}
+
+function uniqueTeaName(base){
+  var existing = allTeas().map(function(t){ return t.n.toLowerCase(); });
+  var name = base.trim();
+  if(existing.indexOf(name.toLowerCase())===-1) return name;
+  var i = 2;
+  while(existing.indexOf((name+' ('+i+')').toLowerCase())!==-1){ i++; }
+  return name+' ('+i+')';
+}
+
+function addCustomTea(tea){
+  tea.n = uniqueTeaName(tea.n);
+  if(!tea.m || !tea.m.trim()) tea.m = "Mis tés";
+  tea.custom = true;
+  customTeas.push(tea);
+  saveCustomTeas();
+}
+
+function removeCustomTea(name){
+  customTeas = customTeas.filter(function(t){ return t.n !== name; });
+  saveCustomTeas();
+  delete state[name];
+  saveState();
 }
 
 var currentFilter = "all";
 var currentSearch = "";
 var expanded = {};
 
-function brandBadgeClass(m){ return m === "Inti Hebras" ? "brand-hebras" : "brand-zen"; }
+function brandBadgeClass(m){
+  if(m === "Inti Hebras") return "brand-hebras";
+  if(m === "Inti Zen") return "brand-zen";
+  return "brand-custom";
+}
 
 function makeStars(name, score){
   var html = '<div class="stars" data-name="'+escapeAttr(name)+'">';
@@ -314,9 +458,8 @@ function escapeHtml(s){
 function renderList(){
   var list = document.getElementById('list');
   var term = currentSearch.trim().toLowerCase();
-  var filtered = TEAS.filter(function(t){
-    if(currentFilter==="hebras" && t.m!=="Inti Hebras") return false;
-    if(currentFilter==="zen" && t.m!=="Inti Zen") return false;
+  var filtered = allTeas().filter(function(t){
+    if(currentFilter.indexOf("brand:")===0 && t.m!==currentFilter.slice(6)) return false;
     if(currentFilter==="probados" && !getEntry(t.n).tried) return false;
     if(currentFilter==="sinteina" && t.te!=="No") return false;
     if(term && t.n.toLowerCase().indexOf(term)===-1 && t.d.toLowerCase().indexOf(term)===-1) return false;
@@ -337,8 +480,8 @@ function renderList(){
     html += '    <div>';
     html += '      <p class="card-name">'+escapeHtml(t.n)+'</p>';
     html += '      <div class="badge-row">';
-    html += '        <span class="badge '+brandBadgeClass(t.m)+'">'+t.m+'</span>';
-    html += '        <span class="badge '+brandBadgeClass(t.m)+'">'+t.t+'</span>';
+    html += '        <span class="badge '+brandBadgeClass(t.m)+'">'+escapeHtml(t.m)+'</span>';
+    html += '        <span class="badge '+brandBadgeClass(t.m)+'">'+escapeHtml(t.t)+'</span>';
     html += '        <span class="badge '+(t.te==="Sí"?"teina-si":"teina-no")+'">'+(t.te==="Sí"?"Con teína":"Sin teína")+'</span>';
     html += '      </div>';
     html += '    </div>';
@@ -349,7 +492,7 @@ function renderList(){
     }
     html += '  </div>';
     html += '  <p class="card-desc">'+escapeHtml(t.d)+'</p>';
-    html += '  <div class="card-meta"><span>🌡️ '+t.temp+'</span><span>⏱️ '+t.time+'</span></div>';
+    html += '  <div class="card-meta"><span>🌡️ '+escapeHtml(t.temp)+'</span><span>⏱️ '+escapeHtml(t.time)+'</span></div>';
     html += '  <div class="card-foot">';
     html += '    <div class="tried-toggle"><div class="switch'+(e.tried?' on':'')+'" data-action="toggle-tried"><div class="dot"></div></div><span>'+(e.tried?'Ya lo probé':'Marcar como probado')+'</span></div>';
     html += '    <button type="button" class="expand-btn" data-action="toggle-expand">'+(expanded[t.n]?'Cerrar':'Puntuar')+'</button>';
@@ -357,6 +500,9 @@ function renderList(){
     html += '  <div class="expand-panel'+isOpen+'">';
     html += makeStars(t.n, e.score);
     html += '    <textarea class="review" placeholder="¿Qué te pareció? Sabor, aroma, si lo tomarías de nuevo...">'+escapeHtml(e.review||"")+'</textarea>';
+    if(t.custom){
+      html += '    <button type="button" class="delete-tea-btn" data-action="delete-tea">🗑️ Eliminar este té</button>';
+    }
     html += '  </div>';
     html += '</div>';
   });
@@ -407,13 +553,26 @@ function attachCardListeners(){
         updateStats();
       });
     }
+
+    var delBtn = card.querySelector('[data-action="delete-tea"]');
+    if(delBtn){
+      delBtn.addEventListener('click', function(){
+        var ok = window.confirm('¿Eliminar "'+name+'"? Se va a borrar también su puntuación y reseña.');
+        if(!ok) return;
+        removeCustomTea(name);
+        delete expanded[name];
+        renderList();
+        showToast('Té eliminado');
+      });
+    }
   });
 }
 
 function updateStats(){
+  var teas = allTeas();
   var triedCount = 0, scoreSum = 0, scoreCount = 0;
   var best = null;
-  TEAS.forEach(function(t){
+  teas.forEach(function(t){
     var e = getEntry(t.n);
     if(e.tried) triedCount++;
     if(e.score>0){
@@ -421,13 +580,13 @@ function updateStats(){
       if(!best || e.score>best.score) best = {n:t.n, score:e.score};
     }
   });
-  document.getElementById('stat-tried').textContent = triedCount+'/30';
+  document.getElementById('stat-tried').textContent = triedCount+'/'+teas.length;
   document.getElementById('stat-avg').textContent = scoreCount ? (scoreSum/scoreCount).toFixed(1) : '–';
   document.getElementById('stat-fav').textContent = best ? best.n : '–';
 }
 
 function renderRanking(){
-  var rows = TEAS.map(function(t){
+  var rows = allTeas().map(function(t){
     var e = getEntry(t.n);
     return {n:t.n, m:t.m, score:e.score, review:e.review};
   }).filter(function(r){ return r.score>0; });
@@ -454,18 +613,31 @@ function renderRanking(){
   el.innerHTML = html;
 }
 
-var FILTERS = [
-  {key:"all", label:"Todos"},
-  {key:"hebras", label:"Inti Hebras"},
-  {key:"zen", label:"Inti Zen"},
+var EXTRA_FILTERS = [
   {key:"sinteina", label:"Sin teína"},
   {key:"probados", label:"Ya probados"}
 ];
 
+function getBrandList(){
+  var seen = {};
+  var brands = [];
+  allTeas().forEach(function(t){
+    if(!seen[t.m]){
+      seen[t.m] = true;
+      brands.push(t.m);
+    }
+  });
+  return brands;
+}
+
 function renderFilters(){
   var wrap = document.getElementById('filters');
-  wrap.innerHTML = FILTERS.map(function(f){
-    return '<div class="chip'+(currentFilter===f.key?' active':'')+'" data-key="'+f.key+'">'+f.label+'</div>';
+  var brandChips = getBrandList().map(function(b){
+    return {key:"brand:"+b, label:b};
+  });
+  var allFilters = [{key:"all", label:"Todos"}].concat(brandChips).concat(EXTRA_FILTERS);
+  wrap.innerHTML = allFilters.map(function(f){
+    return '<div class="chip'+(currentFilter===f.key?' active':'')+'" data-key="'+escapeAttr(f.key)+'">'+escapeHtml(f.label)+'</div>';
   }).join('');
   wrap.querySelectorAll('.chip').forEach(function(chip){
     chip.addEventListener('click', function(){
@@ -502,9 +674,10 @@ function showToast(msg){
 function exportData(){
   var payload = {
     app: "guia_tes_inti",
-    version: 1,
+    version: 2,
     exportedAt: new Date().toISOString(),
-    data: state
+    data: state,
+    customTeas: customTeas
   };
   var blob = new Blob([JSON.stringify(payload, null, 2)], {type:"application/json"});
   var url = URL.createObjectURL(blob);
@@ -525,14 +698,18 @@ function importDataFromFile(file){
     try{
       var parsed = JSON.parse(reader.result);
       var incoming = parsed && parsed.data ? parsed.data : parsed;
+      var incomingCustom = (parsed && Array.isArray(parsed.customTeas)) ? parsed.customTeas : [];
       if(typeof incoming !== "object" || incoming === null){
         showToast("El archivo no tiene un formato válido");
         return;
       }
-      var ok = window.confirm("¿Importar este backup? Va a reemplazar tus puntuaciones y reseñas actuales en este celular.");
+      var ok = window.confirm("¿Importar este backup? Va a reemplazar tus puntuaciones, reseñas y tés agregados actuales en este celular.");
       if(!ok) return;
       state = incoming;
+      customTeas = incomingCustom;
       saveState();
+      saveCustomTeas();
+      renderFilters();
       renderList();
       renderRanking();
       showToast("Datos importados ✓");
@@ -553,7 +730,95 @@ document.getElementById('file-import').addEventListener('change', function(e){
   e.target.value = "";
 });
 
+// ---- Add custom tea modal ----
+var selectedType = null;
+var selectedTeina = "Sí";
+
+function openAddTeaModal(){
+  document.getElementById('f-name').value = "";
+  document.getElementById('f-brand').value = "";
+  document.getElementById('f-desc').value = "";
+  document.getElementById('f-temp').value = "";
+  document.getElementById('f-time').value = "";
+  selectedType = null;
+  selectedTeina = "Sí";
+  document.querySelectorAll('#f-type-row .radio-opt').forEach(function(o){ o.classList.remove('selected'); });
+  document.querySelectorAll('#f-teina-row .radio-opt').forEach(function(o){
+    o.classList.toggle('selected', o.getAttribute('data-val')==="Sí");
+  });
+  document.getElementById('f-name-error').classList.remove('show');
+  document.getElementById('f-type-error').classList.remove('show');
+  document.getElementById('modal-overlay').classList.remove('hidden');
+}
+function closeAddTeaModal(){
+  document.getElementById('modal-overlay').classList.add('hidden');
+}
+
+document.getElementById('btn-add-tea').addEventListener('click', openAddTeaModal);
+document.getElementById('btn-cancel-tea').addEventListener('click', closeAddTeaModal);
+document.getElementById('modal-overlay').addEventListener('click', function(e){
+  if(e.target.id === 'modal-overlay') closeAddTeaModal();
+});
+
+document.querySelectorAll('#f-type-row .radio-opt').forEach(function(opt){
+  opt.addEventListener('click', function(){
+    document.querySelectorAll('#f-type-row .radio-opt').forEach(function(o){ o.classList.remove('selected'); });
+    opt.classList.add('selected');
+    selectedType = opt.getAttribute('data-val');
+  });
+});
+
+document.querySelectorAll('#f-teina-row .radio-opt').forEach(function(opt){
+  opt.addEventListener('click', function(){
+    document.querySelectorAll('#f-teina-row .radio-opt').forEach(function(o){ o.classList.remove('selected'); });
+    opt.classList.add('selected');
+    selectedTeina = opt.getAttribute('data-val');
+  });
+});
+
+document.getElementById('btn-save-tea').addEventListener('click', function(){
+  var name = document.getElementById('f-name').value.trim();
+  var nameErr = document.getElementById('f-name-error');
+  var typeErr = document.getElementById('f-type-error');
+  var valid = true;
+
+  if(!name){
+    nameErr.classList.add('show');
+    valid = false;
+  } else {
+    nameErr.classList.remove('show');
+  }
+  if(!selectedType){
+    typeErr.classList.add('show');
+    valid = false;
+  } else {
+    typeErr.classList.remove('show');
+  }
+  if(!valid) return;
+
+  var desc = document.getElementById('f-desc').value.trim();
+  var temp = document.getElementById('f-temp').value.trim();
+  var time = document.getElementById('f-time').value.trim();
+  var brand = document.getElementById('f-brand').value.trim();
+
+  addCustomTea({
+    n: name,
+    m: brand,
+    t: selectedType,
+    te: selectedTeina,
+    d: desc || "Sin descripción todavía.",
+    temp: temp || "—",
+    time: time || "—"
+  });
+
+  closeAddTeaModal();
+  renderList();
+  renderFilters();
+  showToast("¡Té agregado! 🍵");
+});
+
 loadState();
+loadCustomTeas();
 renderFilters();
 renderList();
 </script>
